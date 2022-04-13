@@ -4,6 +4,7 @@ const morgan = require('morgan')
 const mongoose = require('mongoose')
 const session = require('express-session')
 const connectFlash = require('connect-flash')
+const passport = require('passport')
 
 const indexRoute = require('./routes/index.route')
 const authRoute = require('./routes/auth.route')
@@ -31,6 +32,10 @@ app.use(
     },
   })
 )
+// Init Passport for Authentication
+app.use(passport.initialize())
+app.use(passport.session())
+require('./utils/passport.auth')
 
 app.use(connectFlash())
 app.use((req, res, next) => {
