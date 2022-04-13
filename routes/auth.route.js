@@ -4,26 +4,28 @@ const passport = require('passport')
 
 const User = require('../models/user.model')
 
-router.get('/login', async (req, res, next) => {
+router.get('/login', ensureNotAuthenticated, async (req, res, next) => {
   res.render('login')
 })
 
 router.post(
   '/login',
+  ensureNotAuthenticated,
   passport.authenticate('local', {
-    successRedirect: '/user/profile',
+    successRedirect: '/',
     failureRedirect: '/auth/login',
     failureFlash: true,
   })
 )
 
 //Register
-router.get('/register', async (req, res, next) => {
+router.get('/register', ensureNotAuthenticated, async (req, res, next) => {
   res.render('register')
 })
 
 router.post(
   '/register',
+  ensureNotAuthenticated,
   [
     body('email')
       .trim()
@@ -73,9 +75,20 @@ router.post(
   }
 )
 
-router.get('/logout', async (req, res, next) => {
+router.get('/logout', ensureAuthenticated, async (req, res, next) => {
   req.logout()
   req.flash('success', 'You are logged out.')
   res.redirect('/')
 })
 module.exports = router
+
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) return next()
+  res.redirect('/auth/login')
+}
+
+function ensureNotAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) res.redirect('back')
+
+  return next()
+}

@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const session = require('express-session')
 const connectFlash = require('connect-flash')
 const passport = require('passport')
+const connectMongo = require('connect-mongo')
 
 const indexRoute = require('./routes/index.route')
 const authRoute = require('./routes/auth.route')
@@ -30,12 +31,19 @@ app.use(
       // secure: false
       httpOnly: true,
     },
+    store: connectMongo.create({ mongoUrl: process.env.MONGODB_URI }),
   })
 )
 // Init Passport for Authentication
 app.use(passport.initialize())
 app.use(passport.session())
 require('./utils/passport.auth')
+
+//
+app.use((req, res, next) => {
+  res.locals.user = req.user
+  next()
+})
 
 app.use(connectFlash())
 app.use((req, res, next) => {
@@ -46,7 +54,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/', indexRoute)
 app.use('/auth', authRoute)
-app.use('/user', userRoute)
+app.use('/user', ensureAuthenticated, userRoute)
 
 //Error handlers
 app.use((req, res, next) => {
@@ -75,3 +83,10 @@ mongoose
   .catch(err => {
     console.log(err.message)
   })
+
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next()
+  }
+  res.redirect('/auth/login')
+}
