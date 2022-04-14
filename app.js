@@ -11,6 +11,8 @@ const connectEnsureLogin = require('connect-ensure-login')
 const indexRoute = require('./routes/index.route')
 const authRoute = require('./routes/auth.route')
 const userRoute = require('./routes/user.route')
+const adminRoute = require('./routes/admin.route')
+const { roles } = require('./utils/constants')
 
 require('dotenv').config()
 
@@ -62,6 +64,12 @@ app.use(
   }),
   userRoute
 )
+app.use(
+  '/admin',
+  connectEnsureLogin.ensureLoggedIn({ redirectTo: '/auth/login' }),
+  ensureAdmin,
+  adminRoute
+)
 
 //Error handlers
 app.use((req, res, next) => {
@@ -98,3 +106,19 @@ mongoose
 //   }
 //   res.redirect('/auth/login')
 // }
+
+function ensureAdmin(req, res, next) {
+  if (req.isAuthenticated() && req.user.role === roles.admin) {
+    return next()
+  }
+  req.flash('warning', 'You are not authorized to view this page.')
+  res.redirect('/')
+}
+
+function ensureModerator(req, res, next) {
+  if (req.isAuthenticated() && req.user.role === roles.moderator) {
+    return next()
+  }
+  req.flash('warning', 'You are not authorized to view this page.')
+  res.redirect('/')
+}
