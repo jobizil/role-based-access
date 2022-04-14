@@ -1,31 +1,41 @@
 const router = require('express').Router()
 const { body, validationResult } = require('express-validator')
 const passport = require('passport')
+const connectEnsureLogin = require('connect-ensure-login')
 
 const User = require('../models/user.model')
 
-router.get('/login', ensureNotAuthenticated, async (req, res, next) => {
-  res.render('login')
-})
+router.get(
+  '/login',
+  connectEnsureLogin.ensureLoggedOut({ redirectTo: '/' }),
+  async (req, res, next) => {
+    res.render('login')
+  }
+)
 
 router.post(
   '/login',
-  ensureNotAuthenticated,
+  connectEnsureLogin.ensureLoggedOut({ redirectTo: '/' }),
   passport.authenticate('local', {
-    successRedirect: '/',
+    // successRedirect: '/',
+    successReturnToOrRedirect: '/',
     failureRedirect: '/auth/login',
     failureFlash: true,
   })
 )
 
 //Register
-router.get('/register', ensureNotAuthenticated, async (req, res, next) => {
-  res.render('register')
-})
+router.get(
+  '/register',
+  connectEnsureLogin.ensureLoggedOut({ redirectTo: '/' }),
+  async (req, res, next) => {
+    res.render('register')
+  }
+)
 
 router.post(
   '/register',
-  ensureNotAuthenticated,
+  connectEnsureLogin.ensureLoggedOut({ redirectTo: '/' }),
   [
     body('email')
       .trim()
@@ -75,20 +85,24 @@ router.post(
   }
 )
 
-router.get('/logout', ensureAuthenticated, async (req, res, next) => {
-  req.logout()
-  req.flash('success', 'You are logged out.')
-  res.redirect('/')
-})
+router.get(
+  '/logout',
+  connectEnsureLogin.ensureLoggedIn({ redirectTo: '/' }),
+  async (req, res, next) => {
+    req.logout()
+    req.flash('success', 'You are logged out.')
+    res.redirect('/')
+  }
+)
 module.exports = router
 
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) return next()
-  res.redirect('/auth/login')
-}
+// function ensureAuthenticated(req, res, next) {
+//   if (req.isAuthenticated()) return next()
+//   res.redirect('/auth/login')
+// }
 
-function ensureNotAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) res.redirect('back')
+// function ensureNotAuthenticated(req, res, next) {
+//   if (req.isAuthenticated()) res.redirect('back')
 
-  return next()
-}
+//   return next()
+// }

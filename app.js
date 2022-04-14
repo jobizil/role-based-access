@@ -6,6 +6,7 @@ const session = require('express-session')
 const connectFlash = require('connect-flash')
 const passport = require('passport')
 const connectMongo = require('connect-mongo')
+const connectEnsureLogin = require('connect-ensure-login')
 
 const indexRoute = require('./routes/index.route')
 const authRoute = require('./routes/auth.route')
@@ -54,7 +55,13 @@ app.use((req, res, next) => {
 // Routes
 app.use('/', indexRoute)
 app.use('/auth', authRoute)
-app.use('/user', ensureAuthenticated, userRoute)
+app.use(
+  '/user',
+  connectEnsureLogin.ensureLoggedIn({
+    redirectTo: '/auth/login',
+  }),
+  userRoute
+)
 
 //Error handlers
 app.use((req, res, next) => {
@@ -84,9 +91,10 @@ mongoose
     console.log(err.message)
   })
 
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next()
-  }
-  res.redirect('/auth/login')
-}
+//From Passport
+// function ensureAuthenticated(req, res, next) {
+//   if (req.isAuthenticated()) {
+//     return next()
+//   }
+//   res.redirect('/auth/login')
+// }
