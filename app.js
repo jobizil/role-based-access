@@ -6,7 +6,7 @@ const session = require('express-session')
 const connectFlash = require('connect-flash')
 const passport = require('passport')
 const connectMongo = require('connect-mongo')
-const connectEnsureLogin = require('connect-ensure-login')
+const { ensureLoggedIn } = require('connect-ensure-login')
 
 const indexRoute = require('./routes/index.route')
 const authRoute = require('./routes/auth.route')
@@ -59,14 +59,14 @@ app.use('/', indexRoute)
 app.use('/auth', authRoute)
 app.use(
   '/user',
-  connectEnsureLogin.ensureLoggedIn({
+  ensureLoggedIn({
     redirectTo: '/auth/login',
   }),
   userRoute
 )
 app.use(
   '/admin',
-  connectEnsureLogin.ensureLoggedIn({ redirectTo: '/auth/login' }),
+  ensureLoggedIn({ redirectTo: '/auth/login' }),
   ensureAdmin,
   adminRoute
 )

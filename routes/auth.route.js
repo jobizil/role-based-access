@@ -1,13 +1,15 @@
 const router = require('express').Router()
 const { body, validationResult } = require('express-validator')
 const passport = require('passport')
-const connectEnsureLogin = require('connect-ensure-login')
+const { ensureLoggedOut, ensureLoggedIn } = require('connect-ensure-login')
 
 const User = require('../models/user.model')
 
+const { registerValidator } = require('../utils/validators')
+
 router.get(
   '/login',
-  connectEnsureLogin.ensureLoggedOut({ redirectTo: '/' }),
+  ensureLoggedOut({ redirectTo: '/' }),
   async (req, res, next) => {
     res.render('login')
   }
@@ -15,7 +17,7 @@ router.get(
 
 router.post(
   '/login',
-  connectEnsureLogin.ensureLoggedOut({ redirectTo: '/' }),
+  ensureLoggedOut({ redirectTo: '/' }),
   passport.authenticate('local', {
     // successRedirect: '/',
     successReturnToOrRedirect: '/',
@@ -27,7 +29,7 @@ router.post(
 //Register
 router.get(
   '/register',
-  connectEnsureLogin.ensureLoggedOut({ redirectTo: '/' }),
+  ensureLoggedOut({ redirectTo: '/' }),
   async (req, res, next) => {
     res.render('register')
   }
@@ -35,25 +37,8 @@ router.get(
 
 router.post(
   '/register',
-  connectEnsureLogin.ensureLoggedOut({ redirectTo: '/' }),
-  [
-    body('email')
-      .trim()
-      .isEmail()
-      .withMessage('Please enter a valid email address.')
-      .normalizeEmail()
-      .toLowerCase(),
-    body('password')
-      .trim()
-      .isLength({ min: 3 })
-      .withMessage('Password must be at least 3 characters long.'),
-    body('password2').custom((value, { req }) => {
-      if (value !== req.body.password) {
-        throw new Error('Passwords do not match.')
-      }
-      return true
-    }),
-  ],
+  ensureLoggedOut({ redirectTo: '/' }),
+  registerValidator,
   async (req, res, next) => {
     try {
       const errors = validationResult(req)
@@ -87,7 +72,7 @@ router.post(
 
 router.get(
   '/logout',
-  connectEnsureLogin.ensureLoggedIn({ redirectTo: '/' }),
+  ensureLoggedIn({ redirectTo: '/' }),
   async (req, res, next) => {
     req.logout()
     req.flash('success', 'You are logged out.')
